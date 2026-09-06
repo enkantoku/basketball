@@ -18,14 +18,19 @@
     padding:14px 12px calc(14px + env(safe-area-inset-bottom));
     display:flex;flex-direction:column;min-height:100%;
   }
-  button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer;}
+  button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer;
+    touch-action:manipulation;-webkit-user-select:none;user-select:none;}
   button:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
+  .court-big div,.rest-small span,.chip,.count{-webkit-user-select:none;user-select:none;}
 
   .topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;}
   .whereami{color:var(--dim);font-size:15px;}
   .topbtns{display:flex;gap:8px;align-items:center;}
   .gear{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);
     display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:16px;}
+  .warnbadge{border:1px solid #6b3a3a;background:#2a1a1a;color:#e2a5a5;
+    border-radius:8px;font-size:12px;padding:7px 10px;line-height:1;}
+  .warnbadge[hidden]{display:none;}
 
   .match{display:flex;gap:10px;margin-top:12px;}
   .team{flex:1;min-width:0;background:var(--panel);border-radius:14px;padding:11px;
@@ -39,28 +44,33 @@
   .rest-small{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:2px;}
   .rest-small span{min-width:32px;border:1px solid var(--line);border-radius:6px;color:var(--dim);
     font-size:14px;font-weight:600;text-align:center;padding:6px;}
-  .rest-small span.next{border-color:#43708f;color:#bcd4e6;}
+  .rest-small span.next{border-color:var(--amber);color:var(--amber);}
 
-  .actions{display:flex;gap:9px;margin-top:12px;}
-  .back{width:70px;border:1px solid var(--line);border-radius:12px;color:var(--dim);font-size:13px;}
+  .actions{display:flex;gap:9px;margin-top:12px;position:sticky;bottom:0;z-index:5;
+    background:var(--navy);padding:8px 0 calc(6px + env(safe-area-inset-bottom));}
+  .back{width:104px;border:1px solid var(--line);border-radius:12px;color:var(--dim);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0 8px;}
+  .bk1{font-size:14px;}
+  .bk2{font-size:11px;color:#6b8aa3;max-width:88px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bk2:empty{display:none;}
   .back:disabled{opacity:.35;}
   .swap{flex:1;background:var(--amber);color:#20160a;border-radius:12px;
     font-size:23px;font-weight:700;padding:22px 0;}
-  .swap:disabled{opacity:.4;}
   .swap.endmode{background:var(--panel-2);color:var(--white);border:1px solid var(--line);}
 
   .waiting{margin-top:12px;background:var(--wait);border-radius:14px;padding:11px;}
-  .wait-row{display:flex;gap:9px;margin-top:8px;overflow-x:auto;}
-  .wait-card{flex:1 0 46%;border:1px solid #1d3550;border-radius:10px;padding:9px 10px;}
+  .wait-row{display:flex;flex-wrap:wrap;gap:9px;margin-top:8px;}
+  .wait-card{flex:1 1 46%;min-width:150px;border:1px solid #1d3550;border-radius:10px;padding:9px 10px;}
   .wait-name{color:var(--dim);font-size:13px;font-weight:600;}
-  .wait-next{color:#6b8aa3;font-size:12px;margin-top:5px;line-height:1.5;}
-  .wait-order{color:#4d6a82;font-size:11px;margin-top:5px;}
+  .wait-next{color:#7c9cb6;font-size:12px;margin-top:5px;line-height:1.5;}
+  .wait-order{color:#7e9cb4;font-size:11px;margin-top:5px;}
 
   .empty{margin-top:40px;text-align:center;color:var(--dim);font-size:15px;line-height:2;}
 
   /* オーバーレイ */
   .overlay{position:fixed;inset:0;background:rgba(5,12,20,.72);display:flex;
     align-items:flex-end;justify-content:center;z-index:20;}
+  #ovConfirm{z-index:30;}
   .overlay[hidden]{display:none;}
   .sheet{background:var(--panel);border-radius:18px 18px 0 0;width:100%;max-width:520px;
     padding:20px 16px calc(16px + env(safe-area-inset-bottom));max-height:92vh;overflow-y:auto;}
@@ -78,14 +88,22 @@
   .go.del{background:var(--danger);color:#fdeaea;}
   .warn{background:#2a1a1a;border-radius:9px;padding:10px 12px;color:#d9a3a3;
     font-size:12px;line-height:1.7;margin-bottom:14px;}
+  .info{background:var(--navy);border-radius:9px;padding:10px 12px;color:var(--dim);
+    font-size:12px;line-height:1.7;margin-bottom:14px;}
   .winpick{display:flex;gap:9px;margin-bottom:6px;}
   .winpick button{flex:1;border:1px solid var(--line);border-radius:12px;padding:18px 0;
     font-size:16px;font-weight:700;}
 
   /* 設定 */
+  .undo-in{width:100%;border:1px solid var(--line);border-radius:10px;color:var(--dim);
+    font-size:13px;padding:11px 0;margin-bottom:14px;}
+  .undo-in:disabled{opacity:.35;}
   .teamtabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
-  .tab{border:1px solid var(--line);border-radius:8px;color:var(--dim);font-size:13px;padding:8px 13px;}
+  .tab{border:1px solid var(--line);border-radius:8px;color:var(--dim);font-size:13px;padding:8px 13px;
+    display:flex;align-items:center;gap:7px;}
   .tab.on{background:var(--panel-2);color:var(--white);border-color:var(--panel-2);}
+  .tabst{font-size:11px;color:#6b8aa3;}
+  .tabst.oncourt{color:var(--amber);}
   .addteam{border:1px dashed var(--line);border-radius:8px;color:var(--dim);font-size:13px;padding:8px 13px;}
   .field{margin-bottom:20px;}
   .stepper{display:flex;align-items:center;gap:12px;}
@@ -96,10 +114,14 @@
   .preview{margin-top:11px;background:var(--navy);border-radius:9px;padding:10px 12px;
     color:var(--dim);font-size:13px;line-height:1.6;}
   .preview b{color:var(--white);font-size:17px;letter-spacing:.12em;}
+  .preview em{color:var(--amber);font-style:normal;font-size:17px;font-weight:700;}
+  .preview .added{color:var(--amber);font-size:12px;display:block;margin-top:5px;}
   .chips{display:flex;flex-wrap:wrap;gap:7px;}
   .chip{width:44px;height:44px;border-radius:9px;border:1px solid var(--line);font-size:17px;}
   .chip.gone{color:#456277;border-style:dashed;text-decoration:line-through;}
+  .chip:disabled{opacity:.4;}
   .note{color:var(--dim);font-size:12px;line-height:1.7;margin-top:9px;}
+  .note.caution{color:#e0b878;}
   .danger-zone{margin-top:24px;border-top:1px solid var(--line);padding-top:15px;}
   .delbtn{border:1px solid #6b3a3a;border-radius:10px;color:#e08b8b;font-size:14px;
     padding:13px 0;width:100%;}
@@ -118,6 +140,7 @@
 <div class="topbar">
   <span class="whereami" id="whereami">—</span>
   <span class="topbtns">
+    <button class="warnbadge" id="btnStore" hidden>⚠ 保存できません</button>
     <button class="gear" id="btnGear" aria-label="設定">⚙</button>
   </span>
 </div>
@@ -125,7 +148,7 @@
 <div id="main"></div>
 
 <div class="actions" id="actions" hidden>
-  <button class="back" id="btnBack">戻す</button>
+  <button class="back" id="btnBack"><span class="bk1">戻す</span><span class="bk2" id="bkLabel"></span></button>
   <button class="swap" id="btnSwap">交代</button>
 </div>
 
@@ -145,18 +168,23 @@
 "use strict";
 
 const KEY = "basket-rotation-v1";
+const BROKEN_KEY = "basket-rotation-broken";
 const COURT = 5;
+const HIST_MAX = 50;
 
 let S = null;          // state
 let history = [];      // 戻す用
 let settingsTeam = null;
+let storageOK = true;  // この端末に保存できるか
+let chipNote = null;   // チップ操作でコートに入った番号のメモ
 
 /* ---------- 状態 ---------- */
 
 function newTeam(name, n){
   const members = [];
   for(let i=1;i<=n;i++) members.push(i);
-  return { id: "t"+Math.random().toString(36).slice(2,8), name, members, startNum:1, streak:0 };
+  return { id:"t"+Math.random().toString(36).slice(2,8), name, members,
+           nextNum:n, startNum:1, streak:0 };
 }
 
 function initState(){
@@ -165,8 +193,7 @@ function initState(){
     playing: [],
     waiting: [],
     gameNo: 1,
-    swaps: 0,
-    firstGameDone: false
+    swaps: 0
   };
 }
 
@@ -223,73 +250,196 @@ function advance(t){
   let i=m.indexOf(t.startNum); if(i<0) i=0;
   t.startNum = m[(i+k)%len];
 }
+function previewAdvance(t){
+  const c = JSON.parse(JSON.stringify(t));
+  advance(c);
+  return courtOf(c);
+}
+
+/* 5人以下なら先頭に揃える。それ以外は消えた番号の次へ寄せる */
+function fixStart(t){
+  if(!t.members.length) return;
+  if(t.members.length<=COURT){ t.startNum = t.members[0]; return; }
+  if(!t.members.includes(t.startNum)){
+    const bigger = t.members.filter(n=>n>t.startNum);
+    t.startNum = bigger.length ? bigger[0] : t.members[0];
+  }
+}
+
+function teamStatus(id){
+  if(S.playing.includes(id)) return {text:"出場中", cls:"oncourt"};
+  const i = S.waiting.indexOf(id);
+  return {text: i>=0 ? "待機"+(i+1) : "—", cls:""};
+}
 
 /* ---------- 保存 ---------- */
 
-function save(){
-  try{ localStorage.setItem(KEY, JSON.stringify({S, history})); }catch(e){}
-}
-function load(){
+function canStore(){
   try{
-    const raw = localStorage.getItem(KEY);
-    if(!raw) return false;
-    const d = JSON.parse(raw);
-    if(!d || !d.S || !Array.isArray(d.S.teams)) return false;
-    S = d.S; history = Array.isArray(d.history) ? d.history : [];
+    localStorage.setItem(KEY+"-test","1");
+    localStorage.removeItem(KEY+"-test");
     return true;
   }catch(e){ return false; }
 }
-function snapshot(){
-  history.push(JSON.stringify(S));
-  if(history.length>200) history.shift();
+
+function writeStore(){
+  localStorage.setItem(KEY, JSON.stringify({S, history}));
+}
+
+function save(){
+  if(!storageOK) return;
+  try{ writeStore(); return; }catch(e){}
+  // 容量オーバーの可能性。履歴を減らして黙って再挑戦する
+  while(history.length){
+    history = history.slice(Math.ceil(history.length/2));
+    try{ writeStore(); syncActions(); return; }catch(e){}
+  }
+  storageOK = false;
+  syncTop();
+  openStorageNotice();
+}
+
+/* 読み込んだ中身を1項目ずつ検査して、直せるものは直す */
+function normalizeTeam(x, usedIds){
+  if(!x || typeof x!=="object") return null;
+  const t = {};
+  t.id = (typeof x.id==="string" && x.id && !usedIds.has(x.id))
+    ? x.id : "t"+Math.random().toString(36).slice(2,8);
+  usedIds.add(t.id);
+  t.name = (typeof x.name==="string" && x.name.trim()) ? x.name : "チーム";
+
+  let m = Array.isArray(x.members) ? x.members.map(Number) : [];
+  m = m.filter(n=>Number.isInteger(n) && n>0);
+  m = Array.from(new Set(m)).sort((a,b)=>a-b);
+  let top = m.length ? m[m.length-1] : 0;
+  while(m.length<COURT){ top++; m.push(top); }   // 5人未満は作れないので埋める
+  t.members = m;
+
+  const maxM = m[m.length-1];
+  t.nextNum = (Number.isInteger(x.nextNum) && x.nextNum>=maxM) ? x.nextNum : maxM;
+
+  const sn = Number(x.startNum);
+  t.startNum = m.includes(sn) ? sn : m[0];
+
+  const sk = Number(x.streak);
+  t.streak = (Number.isFinite(sk) && sk>=0) ? Math.floor(sk) : 0;
+
+  fixStart(t);
+  return t;
+}
+
+function normalizeState(raw){
+  if(!raw || typeof raw!=="object") return null;
+  const usedIds = new Set();
+  const teams = Array.isArray(raw.teams)
+    ? raw.teams.map(x=>normalizeTeam(x, usedIds)).filter(Boolean) : [];
+  if(!teams.length) return null;
+  const ids = teams.map(t=>t.id);
+  const clean = arr => Array.isArray(arr)
+    ? arr.filter((id,i)=>ids.includes(id) && arr.indexOf(id)===i) : [];
+  const playing = clean(raw.playing).slice(0,2);
+  const waiting = clean(raw.waiting).filter(id=>!playing.includes(id));
+  const gameNo = (Number.isInteger(raw.gameNo) && raw.gameNo>0) ? raw.gameNo : 1;
+  const swaps  = (Number.isInteger(raw.swaps)  && raw.swaps>=0) ? raw.swaps  : 0;
+  return { teams, playing, waiting, gameNo, swaps };
+}
+
+function backupBroken(raw){
+  try{ localStorage.setItem(BROKEN_KEY, raw); }catch(e){}
+}
+
+function load(){
+  let raw = null;
+  try{ raw = localStorage.getItem(KEY); }catch(e){ return "empty"; }
+  if(!raw) return "empty";
+  let d = null;
+  try{ d = JSON.parse(raw); }catch(e){ backupBroken(raw); return "broken"; }
+  const st = normalizeState(d && d.S);
+  if(!st){ backupBroken(raw); return "broken"; }
+  S = st;
+  history = Array.isArray(d.history)
+    ? d.history.filter(h=>h && (typeof h==="string" || typeof h.s==="string")).slice(-HIST_MAX)
+    : [];
+  return "ok";
+}
+
+function snapshot(label){
+  history.push({ s: JSON.stringify(S), label: label || "操作" });
+  if(history.length>HIST_MAX) history.shift();
+}
+function lastLabel(){
+  const h = history[history.length-1];
+  if(!h) return "";
+  return typeof h==="string" ? "操作" : (h.label||"操作");
 }
 function undo(){
   if(!history.length) return;
-  S = JSON.parse(history.pop());
-  render(); save();
+  const h = history.pop();
+  const raw = typeof h==="string" ? h : h.s;
+  try{
+    const st = normalizeState(JSON.parse(raw));
+    if(st) S = st;
+  }catch(e){}
+  if(!settingsTeam || !team(settingsTeam)) settingsTeam = S.teams[0] ? S.teams[0].id : null;
+  chipNote = null;
+  render();
+  if(!document.getElementById("ovSettings").hidden) renderSettings();
+  save();
 }
 
 /* ---------- 操作 ---------- */
 
 function doSwap(){
-  snapshot();
+  snapshot("交代");
   S.playing.forEach(id=>advance(team(id)));
   S.swaps++;
   render(); save();
 }
 
-function finishGame(loserStaysWinnerId){
+function finishGame(leavingTeamId){
   const [a,b] = S.playing.map(team);
-  let leaving;
-  if(!S.firstGameDone){
-    leaving = loserStaysWinnerId ? team(loserStaysWinnerId) : a;   // 勝ったほうが抜ける
-  }else{
-    leaving = a.streak >= b.streak ? a : b;
-  }
-  const staying = leaving===a ? b : a;
-  const incoming = S.waiting.length ? team(S.waiting[0]) : null;
+  snapshot("試合終了");
 
-  snapshot();
-  a.streak++; b.streak++;
-  advance(staying);              // 残るチームは試合終了時にも交代
-  leaving.streak = 0;
-  if(incoming){
+  if(!S.waiting.length){
+    // 待機チームがいないので誰も抜けない。両チームとも交代して次の試合へ
+    advance(a); advance(b);
+    a.streak++; b.streak++;
+  }else{
+    const leaving = (leavingTeamId && team(leavingTeamId))
+      ? team(leavingTeamId)
+      : (a.streak >= b.streak ? a : b);
+    const staying = (leaving===a) ? b : a;
+    const incoming = team(S.waiting[0]);
+    a.streak++; b.streak++;
+    advance(staying);                 // 残るチームは試合終了時にも交代
+    leaving.streak = 0;               // 抜けるチームは交代せず、抜けた位置から再開
     S.waiting.shift();
     S.waiting.push(leaving.id);
     S.playing = [staying.id, incoming.id];
   }
-  S.gameNo++; S.swaps=0; S.firstGameDone = true;
+  S.gameNo++; S.swaps = 0;
   render(); save();
 }
 
 /* ---------- 描画 ---------- */
+
+function syncTop(){
+  document.getElementById("btnStore").hidden = storageOK;
+}
+
+function syncActions(){
+  const btn = document.getElementById("btnBack");
+  const has = history.length>0;
+  btn.disabled = !has;
+  document.getElementById("bkLabel").textContent = has ? lastLabel() : "";
+}
 
 function render(){
   seatTeams();
   const main = document.getElementById("main");
   const actions = document.getElementById("actions");
   const waiting = document.getElementById("waiting");
-  const halfLabel = S.swaps===0 ? "前半" : "後半";
+  syncTop();
 
   if(S.playing.length<2){
     document.getElementById("whereami").textContent = "—";
@@ -297,16 +447,17 @@ function render(){
     actions.hidden = true; waiting.hidden = true;
     return;
   }
-  document.getElementById("whereami").textContent = `第${S.gameNo}試合　${halfLabel}`;
+
+  const anyStep = S.playing.some(id=>stepOf(team(id))>0);
+  const phase = !anyStep ? "交代なし" : (S.swaps===0 ? "前半" : "後半");
+  document.getElementById("whereami").textContent = `第${S.gameNo}試合　${phase}`;
 
   main.innerHTML = `<div class="match">${S.playing.map(renderTeam).join("")}</div>`;
 
   actions.hidden = false;
-  document.getElementById("btnBack").disabled = history.length===0;
-  const anyStep = S.playing.some(id=>stepOf(team(id))>0);
+  syncActions();
   const swapDone = S.swaps>=1 || !anyStep;
   const swapBtn = document.getElementById("btnSwap");
-  swapBtn.disabled = false;
   swapBtn.textContent = swapDone ? "試合終了" : "交代";
   swapBtn.classList.toggle("endmode", swapDone);
   swapBtn.onclick = swapDone ? openEnd : doSwap;
@@ -345,46 +496,103 @@ function renderTeam(id){
 
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
-/* ---------- 試合終了の確認 ---------- */
+/* ---------- 試合終了 ---------- */
 
 function openEnd(){
   const [a,b] = S.playing.map(team);
-  const sheet = document.getElementById("confirmSheet");
+  if(!S.waiting.length){ showEndConfirm(null,false); return; }
+  if(a.streak === b.streak){ showWinPick(); return; }
+  showEndConfirm(a.streak > b.streak ? a.id : b.id, false);
+}
 
-  if(!S.firstGameDone){
-    sheet.innerHTML = `<h2>第1試合はどちらが勝ちましたか</h2>
-      <p class="small" style="margin:-6px 0 14px;line-height:1.7;">勝ったチームが抜けて、次のチームが入ります。第2試合からは出場数の多いほうが自動で抜けるので、勝敗を聞くのはこれが最後です。</p>
-      <div class="winpick">
-        <button data-win="${a.id}">${esc(a.name)}</button>
-        <button data-win="${b.id}">${esc(b.name)}</button>
-      </div>
-      <div class="sheet-actions"><button class="cancel" data-close>やめる</button></div>`;
-    sheet.querySelectorAll("[data-win]").forEach(btn=>{
-      btn.onclick = ()=>{ closeOverlays(); finishGame(btn.dataset.win); };
-    });
-  }else{
-    const leaving = a.streak >= b.streak ? a : b;
-    const staying = leaving===a ? b : a;
-    const incoming = S.waiting.length ? team(S.waiting[0]) : null;
-    const stayCourt = (()=>{ const c=JSON.parse(JSON.stringify(staying)); advance(c); return courtOf(c); })();
+function showWinPick(){
+  const [a,b] = S.playing.map(team);
+  const sheet = document.getElementById("confirmSheet");
+  sheet.innerHTML = `<h2>どちらが勝ちましたか</h2>
+    <p class="small" style="margin:-6px 0 14px;line-height:1.7;">2チームとも同じだけ出ているので、勝ったチームが抜けて、待機1番目が入ります。次からは出場数の多いほうが自動で抜けます。</p>
+    <div class="winpick">
+      <button data-win="${a.id}">${esc(a.name)}</button>
+      <button data-win="${b.id}">${esc(b.name)}</button>
+    </div>
+    <div class="sheet-actions"><button class="cancel" data-close>やめる</button></div>`;
+  sheet.querySelectorAll("[data-win]").forEach(btn=>{
+    btn.onclick = ()=>showEndConfirm(btn.dataset.win, true);
+  });
+  sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeOverlays);
+  document.getElementById("ovConfirm").hidden = false;
+}
+
+function showEndConfirm(leavingTeamId, fromPick){
+  const [a,b] = S.playing.map(team);
+  const sheet = document.getElementById("confirmSheet");
+  const backBtn = fromPick
+    ? `<button class="cancel" id="repick">選び直す</button>`
+    : `<button class="cancel" data-close>やめる</button>`;
+
+  if(!S.waiting.length){
+    const ca = previewAdvance(a), cb = previewAdvance(b);
+    const note = t => stepOf(t)===0 ? "（交代なし）" : "";
     sheet.innerHTML = `<h2>この試合を終わりますか</h2>
-      <div class="change">
-        <div class="change-row"><span class="tagout">抜ける</span> ${esc(leaving.name)} <span class="small">連続${leaving.streak+1}試合目</span></div>
-        <div class="change-row"><span class="tagin">入る</span> ${incoming?esc(incoming.name):"—"} <span class="small">${incoming?"待機1番目":"待機チームなし"}</span></div>
-      </div>
-      <div class="nextline">
+      <div class="info">待機しているチームがないので、どちらも抜けません。両チームとも交代して次の試合に進みます。</div>
+      <div class="nextline" style="border-top:none;padding-top:0;">
         次は <b>第${S.gameNo+1}試合　前半</b><br>
-        <b>${esc(staying.name)}</b> 対 <b>${incoming?esc(incoming.name):"—"}</b><br>
-        ${esc(staying.name)}のコート ${stayCourt.join(" ")}<br>
-        ${incoming?esc(incoming.name)+"のコート "+courtOf(incoming).join(" ")+"<br>":""}
-        ${esc(leaving.name)}は ${courtOf(leaving).join(" ")}番 から再開します
+        <b>${esc(a.name)}</b>のコート ${ca.join(" ")}${note(a)}<br>
+        <b>${esc(b.name)}</b>のコート ${cb.join(" ")}${note(b)}
       </div>
       <div class="sheet-actions">
         <button class="cancel" data-close>やめる</button>
         <button class="go" id="doEnd">終わる</button>
       </div>`;
-    sheet.querySelector("#doEnd").onclick = ()=>{ closeOverlays(); finishGame(null); };
+  }else{
+    const leaving = team(leavingTeamId) || (a.streak >= b.streak ? a : b);
+    const staying = (leaving===a) ? b : a;
+    const incoming = team(S.waiting[0]);
+    const stayCourt = previewAdvance(staying);
+    sheet.innerHTML = `<h2>この試合を終わりますか</h2>
+      <div class="change">
+        <div class="change-row"><span class="tagout">抜ける</span> ${esc(leaving.name)} <span class="small">連続${leaving.streak+1}試合目</span></div>
+        <div class="change-row"><span class="tagin">入る</span> ${esc(incoming.name)} <span class="small">待機1番目</span></div>
+      </div>
+      <div class="nextline">
+        次は <b>第${S.gameNo+1}試合　前半</b><br>
+        <b>${esc(staying.name)}</b> 対 <b>${esc(incoming.name)}</b><br>
+        ${esc(staying.name)}のコート ${stayCourt.join(" ")}<br>
+        ${esc(incoming.name)}のコート ${courtOf(incoming).join(" ")}<br>
+        ${esc(leaving.name)}は ${courtOf(leaving).join(" ")}番 から再開します
+      </div>
+      <div class="sheet-actions">
+        ${backBtn}
+        <button class="go" id="doEnd">終わる</button>
+      </div>`;
   }
+
+  const doEnd = sheet.querySelector("#doEnd");
+  if(doEnd) doEnd.onclick = ()=>{ closeOverlays(); finishGame(leavingTeamId); };
+  const repick = sheet.querySelector("#repick");
+  if(repick) repick.onclick = showWinPick;
+  sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeOverlays);
+  document.getElementById("ovConfirm").hidden = false;
+}
+
+/* ---------- 保存できないときの案内 ---------- */
+
+function openStorageNotice(){
+  const sheet = document.getElementById("confirmSheet");
+  sheet.innerHTML = `<h2>この端末では保存できません</h2>
+    <div class="warn">進行状況をこの端末に保存できませんでした。ページを閉じたり読み込み直したりすると、最初からになります。<br>
+    試合が終わるまで、このページを閉じないでください。</div>
+    <p class="note">ブラウザのプライベートモードや、保存できる容量がいっぱいのときに起きます。右上の「⚠ 保存できません」を押すと、この説明をもう一度読めます。</p>
+    <div class="sheet-actions"><button class="go" data-close>わかった</button></div>`;
+  sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeOverlays);
+  document.getElementById("ovConfirm").hidden = false;
+}
+
+function openBrokenNotice(){
+  const sheet = document.getElementById("confirmSheet");
+  sheet.innerHTML = `<h2>前回のデータを読み込めませんでした</h2>
+    <div class="warn">保存されていた進行状況が壊れていたため、チーム1とチーム2の5人ずつに戻しました。人数と番号を設定し直してください。</div>
+    <p class="note">壊れていたデータは端末の中に取ってあります（消したい場合はブラウザの設定から消せます）。</p>
+    <div class="sheet-actions"><button class="go" data-close>わかった</button></div>`;
   sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeOverlays);
   document.getElementById("ovConfirm").hidden = false;
 }
@@ -392,7 +600,12 @@ function openEnd(){
 /* ---------- 設定 ---------- */
 
 function openSettings(){
-  if(!settingsTeam || !team(settingsTeam)) settingsTeam = S.teams[0] ? S.teams[0].id : null;
+  if(!settingsTeam || !team(settingsTeam)){
+    settingsTeam = S.playing[0] || (S.teams[0] ? S.teams[0].id : null);
+  }else if(!S.playing.includes(settingsTeam) && S.playing.length){
+    settingsTeam = S.playing[0];
+  }
+  chipNote = null;
   renderSettings();
   document.getElementById("ovSettings").hidden = false;
 }
@@ -401,43 +614,73 @@ function renderSettings(){
   const sheet = document.getElementById("settingsSheet");
   const t = settingsTeam ? team(settingsTeam) : null;
 
-  const tabs = S.teams.map(x=>`<button class="tab ${x.id===settingsTeam?"on":""}" data-tab="${x.id}">${esc(x.name)}</button>`).join("")
-    + `<button class="addteam" id="addTeam">＋ チーム</button>`;
+  const tabs = S.teams.map(x=>{
+    const st = teamStatus(x.id);
+    return `<button class="tab ${x.id===settingsTeam?"on":""}" data-tab="${x.id}">${esc(x.name)}<span class="tabst ${st.cls}">${st.text}</span></button>`;
+  }).join("") + `<button class="addteam" id="addTeam">＋ チーム</button>`;
+
+  const hasHist = history.length>0;
+  const undoBar = `<button class="undo-in" id="undoIn" ${hasHist?"":"disabled"}>戻す${hasHist?`（${esc(lastLabel())}）`:""}</button>`;
 
   let body = "";
   if(t){
-    const maxNum = t.members.length ? Math.max(...t.members) : 0;
-    const all = []; for(let i=1;i<=maxNum;i++) all.push(i);
+    const isWaiting = !S.playing.includes(t.id);
+    const small = t.members.length<=COURT;
+    const maxM = t.members[t.members.length-1];
+    const canMinus = !small && maxM===t.nextNum;
     const court = courtOf(t);
+    const all = []; for(let i=1;i<=t.nextNum;i++) all.push(i);
+    const added = (chipNote && chipNote.teamId===t.id) ? chipNote.added : [];
+
+    /* 人数 */
+    let minusNote;
+    if(small) minusNote = "5人より少なくはできません。";
+    else if(canMinus) minusNote = `「−」は直前に追加した${maxM}番の取り消しです。`;
+    else minusNote = "「−」は「＋」で追加した番号が残っているときだけ使えます。帰った人は下のチップで外してください。";
+
+    /* 先頭の番号 */
+    const startField = small
+      ? `<div class="stepper"><div class="count">${t.startNum}<small>番から</small></div></div>
+         <div class="preview">5人ぜんいんがコートに出ています　<b>${court.join(" ")||"—"}</b></div>
+         <p class="note">6人以上になると、ここで先頭の番号を調整できるようになります。</p>`
+      : `<div class="stepper">
+           <button class="step-btn" id="sPrev">−</button>
+           <div class="count">${t.startNum}<small>番から</small></div>
+           <button class="step-btn" id="sNext">＋</button>
+         </div>
+         <div class="preview">この5人になります　<b>${court.join(" ")||"—"}</b></div>
+         ${isWaiting?`<p class="note caution">このチームは待機中です。ここを動かすと、次に出るときのコートが変わります。</p>`:""}
+         <p class="note">普段は触りません。交代を押すたびに自動で進み、ここには現在の状態が出ているだけです。実際とズレたときだけ直してください。</p>`;
+
     body = `
       <div class="field">
         <div class="lbl">${esc(t.name)}の人数</div>
         <div class="stepper">
-          <button class="step-btn" id="mMinus" ${t.members.length<=COURT?"disabled":""}>−</button>
+          <button class="step-btn" id="mMinus" ${canMinus?"":"disabled"}>−</button>
           <div class="count">${t.members.length}<small>人</small></div>
           <button class="step-btn" id="mPlus">＋</button>
         </div>
-        <p class="note">増やすと末尾の番号が1つ増えます。減らすと一番大きい番号が消えます。5人より少なくはできません。</p>
+        <p class="note">「＋」を押すと ${t.nextNum+1}番 を追加します。${minusNote}</p>
       </div>
 
       <div class="field">
         <div class="lbl">いまコートに出ている先頭の番号</div>
-        <div class="stepper">
-          <button class="step-btn" id="sPrev">−</button>
-          <div class="count">${t.startNum}<small>番から</small></div>
-          <button class="step-btn" id="sNext">＋</button>
-        </div>
-        <div class="preview">この5人になります　<b>${court.join(" ")||"—"}</b></div>
-        <p class="note">普段は触りません。交代を押すたびに自動で進み、ここには現在の状態が出ているだけです。実際とズレたときだけ直してください。</p>
+        ${startField}
       </div>
 
       <div class="field">
         <div class="lbl">帰った人をタップして外す</div>
         <div class="chips">${all.map(n=>{
           const gone = !t.members.includes(n);
-          return `<button class="chip ${gone?"gone":""}" data-num="${n}">${n}</button>`;
+          const lock = !gone && small;
+          return `<button class="chip ${gone?"gone":""}" data-num="${n}" ${lock?"disabled":""}>${n}</button>`;
         }).join("")}</div>
-        <p class="note">外した番号は欠番になります。他の番号は振り直しません。順番は保ったまま、いない番号を飛ばします。ベンチが減れば交代人数も自動で変わります。5人を切る外し方はできません。</p>
+        <div class="preview">この5人になります　${court.map(n=>
+          added.includes(n) ? `<em>${n}</em>` : `<b>${n}</b>`).join(" ")||"—"}
+          ${added.length?`<span class="added">${added.join("・")}番が新しくコートに入りました</span>`:""}</div>
+        <p class="note">${small
+          ? "5人より少なくはできません。先に人数を増やすか、チーム自体を削除してください。"
+          : "外した番号は欠番になります。他の番号は振り直しません。順番は保ったまま、いない番号を飛ばします。もう一度押すと元の順番の位置に戻ります。"}</p>
       </div>
 
       <div class="danger-zone">
@@ -449,75 +692,84 @@ function renderSettings(){
   }
 
   sheet.innerHTML = `<h2>試合の合間に</h2>
+    ${undoBar}
     <div class="teamtabs">${tabs}</div>
     ${body}
     <button class="done" data-close>この画面を閉じる</button>
-    <button class="resetall" id="resetAll">最初からやり直す</button>`;
+    <button class="resetall" id="resetAll">全チームを消して最初からやり直す</button>`;
 
-  sheet.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{ settingsTeam=b.dataset.tab; renderSettings(); });
+  sheet.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{
+    settingsTeam=b.dataset.tab; chipNote=null; renderSettings();
+  });
   sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeOverlays);
   sheet.querySelector("#addTeam").onclick = addTeam;
   sheet.querySelector("#resetAll").onclick = resetAll;
+  const undoIn = sheet.querySelector("#undoIn");
+  if(undoIn && !undoIn.disabled) undoIn.onclick = undo;
 
   if(t){
     sheet.querySelector("#mPlus").onclick = ()=>{
-      snapshot();
-      const maxNum = t.members.length ? Math.max(...t.members) : 0;
-      t.members.push(maxNum+1);
-      afterEdit();
+      snapshot(`${t.nextNum+1}番を追加`);
+      t.nextNum++;
+      t.members.push(t.nextNum);
+      fixStart(t); chipNote=null; afterEdit();
     };
     const mMinus = sheet.querySelector("#mMinus");
-    if(!mMinus.disabled) mMinus.onclick = ()=>{
-      if(t.members.length<=COURT) return;
-      snapshot();
-      const maxNum = Math.max(...t.members);
-      t.members = t.members.filter(n=>n!==maxNum);
-      fixStart(t); afterEdit();
+    if(mMinus && !mMinus.disabled) mMinus.onclick = ()=>{
+      const n = t.nextNum;
+      snapshot(`${n}番を取り消し`);
+      t.members = t.members.filter(x=>x!==n);
+      t.nextNum--;
+      fixStart(t); chipNote=null; afterEdit();
     };
-    sheet.querySelector("#sPrev").onclick = ()=>shiftStart(t,-1);
-    sheet.querySelector("#sNext").onclick = ()=>shiftStart(t,1);
+    const sPrev = sheet.querySelector("#sPrev");
+    const sNext = sheet.querySelector("#sNext");
+    if(sPrev) sPrev.onclick = ()=>shiftStart(t,-1);
+    if(sNext) sNext.onclick = ()=>shiftStart(t,1);
+
     sheet.querySelectorAll("[data-num]").forEach(b=>{
+      if(b.disabled) return;
       b.onclick = ()=>{
         const n = Number(b.dataset.num);
-        snapshot();
+        const before = courtOf(t);
         if(t.members.includes(n)){
-          if(t.members.length<=COURT){ history.pop(); return; }
+          snapshot(`${n}番を外した`);
           t.members = t.members.filter(x=>x!==n);
         }else{
+          snapshot(`${n}番を戻した`);
           t.members.push(n); t.members.sort((a,b)=>a-b);
         }
-        fixStart(t); afterEdit();
+        fixStart(t);
+        const after = courtOf(t);
+        const added = after.filter(x=>!before.includes(x));
+        chipNote = added.length ? {teamId:t.id, added} : null;
+        afterEdit();
       };
     });
     sheet.querySelector("#delTeam").onclick = ()=>confirmDelete(t);
   }
 }
 
-function fixStart(t){
-  if(!t.members.length) return;
-  if(!t.members.includes(t.startNum)){
-    const bigger = t.members.filter(n=>n>t.startNum);
-    t.startNum = bigger.length ? bigger[0] : t.members[0];
-  }
-}
 function shiftStart(t,dir){
-  if(t.members.length<2) return;
-  snapshot();
+  if(t.members.length<=COURT) return;
+  snapshot("先頭の番号を変更");
   let i = t.members.indexOf(t.startNum); if(i<0) i=0;
   i = (i + dir + t.members.length) % t.members.length;
   t.startNum = t.members[i];
+  chipNote = null;
   afterEdit();
 }
 function afterEdit(){ render(); renderSettings(); save(); }
 
 function addTeam(){
-  snapshot();
   const used = S.teams.map(t=>t.name);
   let n = 1;
   while(used.includes("チーム"+n)) n++;
+  snapshot(`チーム${n}を追加`);
   const t = newTeam("チーム"+n, COURT);
   S.teams.push(t);
   settingsTeam = t.id;
+  chipNote = null;
   afterEdit();
 }
 
@@ -529,8 +781,15 @@ function confirmDelete(t){
   const sheet = document.getElementById("confirmSheet");
   if(isPlaying && !incoming){
     sheet.innerHTML = `<h2>いまは削除できません</h2>
-      <div class="warn">${esc(t.name)}は試合に出ていて、代わりに入れる待機チームがありません。先にチームを追加するか、試合を終わらせてから削除してください。</div>
-      <div class="sheet-actions"><button class="cancel" data-close>閉じる</button></div>`;
+      <div class="warn">${esc(t.name)}は試合に出ていて、代わりに入れる待機チームがありません。先にチームを追加してから削除してください。</div>
+      <div class="sheet-actions">
+        <button class="cancel" data-close>閉じる</button>
+        <button class="go" id="addFromDel">＋ チームを追加</button>
+      </div>`;
+    sheet.querySelector("#addFromDel").onclick = ()=>{
+      document.getElementById("ovConfirm").hidden = true;
+      addTeam();
+    };
   }else{
     sheet.innerHTML = `<h2>${esc(t.name)}を削除しますか</h2>
       ${isPlaying ? `<div class="warn">${esc(t.name)}はいま試合に出ています。削除すると、代わりに待機1番目の${esc(incoming.name)}が入ります。</div>` : ""}
@@ -543,13 +802,18 @@ function confirmDelete(t){
         <button class="go del" id="doDel">削除する</button>
       </div>`;
     sheet.querySelector("#doDel").onclick = ()=>{
-      snapshot();
+      snapshot(`${t.name}を削除`);
       S.teams = S.teams.filter(x=>x.id!==t.id);
       S.playing = S.playing.filter(id=>id!==t.id);
       S.waiting = S.waiting.filter(id=>id!==t.id);
-      settingsTeam = S.teams[0] ? S.teams[0].id : null;
+      settingsTeam = null;
+      chipNote = null;
       document.getElementById("ovConfirm").hidden = true;
-      render(); renderSettings(); save();
+      render();
+      if(!settingsTeam || !team(settingsTeam)){
+        settingsTeam = S.playing[0] || (S.teams[0] ? S.teams[0].id : null);
+      }
+      renderSettings(); save();
     };
   }
   sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>{ document.getElementById("ovConfirm").hidden = true; });
@@ -558,14 +822,14 @@ function confirmDelete(t){
 
 function resetAll(){
   const sheet = document.getElementById("confirmSheet");
-  sheet.innerHTML = `<h2>最初からやり直しますか</h2>
-    <div class="warn">チーム、人数、進行状況がすべて消えて、5人2チームの状態に戻ります。「戻す」でも元に戻せません。</div>
+  sheet.innerHTML = `<h2>全チームを消して最初からやり直しますか</h2>
+    <div class="warn">開いているチームだけではありません。すべてのチーム、人数、欠番、進行状況が消えて、チーム1とチーム2の5人ずつに戻ります。「戻す」でも元に戻せません。</div>
     <div class="sheet-actions">
       <button class="cancel" data-close>やめる</button>
       <button class="go del" id="doReset">やり直す</button>
     </div>`;
   sheet.querySelector("#doReset").onclick = ()=>{
-    S = initState(); history = [];
+    S = initState(); history = []; chipNote = null;
     settingsTeam = S.teams[0].id;
     closeOverlays(); render(); save();
   };
@@ -582,15 +846,29 @@ function closeOverlays(){
 
 document.getElementById("btnBack").onclick = undo;
 document.getElementById("btnGear").onclick = openSettings;
+document.getElementById("btnStore").onclick = openStorageNotice;
 [["ovConfirm"],["ovSettings"]].forEach(([id])=>{
   document.getElementById(id).addEventListener("click", e=>{
     if(e.target.id===id) e.currentTarget.hidden = true;
   });
 });
 
-if(!load()) S = initState();
-settingsTeam = S.teams[0] ? S.teams[0].id : null;
-render();
+storageOK = canStore();
+let startupState = "empty";
+try{ startupState = load(); }catch(e){ startupState = "broken"; }
+if(startupState !== "ok"){ S = initState(); history = []; }
+settingsTeam = null;
+
+try{
+  render();
+}catch(e){
+  S = initState(); history = [];
+  render();
+  startupState = "broken";
+}
+
+if(!storageOK) openStorageNotice();
+else if(startupState === "broken") openBrokenNotice();
 </script>
 </body>
 </html>
