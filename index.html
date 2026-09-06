@@ -161,7 +161,7 @@ function newTeam(name, n){
 
 function initState(){
   return {
-    teams: [newTeam("Aチーム",5), newTeam("Bチーム",5)],
+    teams: [newTeam("チーム1",5), newTeam("チーム2",5)],
     playing: [],
     waiting: [],
     gameNo: 1,
@@ -401,7 +401,7 @@ function renderSettings(){
   const sheet = document.getElementById("settingsSheet");
   const t = settingsTeam ? team(settingsTeam) : null;
 
-  const tabs = S.teams.map(x=>`<button class="tab ${x.id===settingsTeam?"on":""}" data-tab="${x.id}">${esc(x.name.replace(/チーム$/,""))}</button>`).join("")
+  const tabs = S.teams.map(x=>`<button class="tab ${x.id===settingsTeam?"on":""}" data-tab="${x.id}">${esc(x.name)}</button>`).join("")
     + `<button class="addteam" id="addTeam">＋ チーム</button>`;
 
   let body = "";
@@ -513,10 +513,9 @@ function afterEdit(){ render(); renderSettings(); save(); }
 function addTeam(){
   snapshot();
   const used = S.teams.map(t=>t.name);
-  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  let name = "新しいチーム";
-  for(const L of letters){ if(!used.includes(L+"チーム")){ name = L+"チーム"; break; } }
-  const t = newTeam(name, COURT);
+  let n = 1;
+  while(used.includes("チーム"+n)) n++;
+  const t = newTeam("チーム"+n, COURT);
   S.teams.push(t);
   settingsTeam = t.id;
   afterEdit();
