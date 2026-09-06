@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>バスケ交代管理</title>
+<style>
+  :root{
+    --navy:#0d1c2b; --panel:#132b42; --panel-2:#1c3c5a; --line:#27506e;
+    --white:#f7fafc; --dim:#7e9cb4; --amber:#ffb01f; --wait:#0a1622;
+    --danger:#8a3b3b;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;background:var(--navy);color:var(--white);
+    font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;
+    padding:14px 12px calc(14px + env(safe-area-inset-bottom));
+    display:flex;flex-direction:column;min-height:100%;
+  }
+  button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer;}
+  button:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
+
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .whereami{color:var(--dim);font-size:15px;}
+  .topbtns{display:flex;gap:8px;align-items:center;}
+  .gear{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:16px;}
+
+  .match{display:flex;gap:10px;margin-top:12px;}
+  .team{flex:1;min-width:0;background:var(--panel);border-radius:14px;padding:11px;
+    display:flex;flex-direction:column;}
+  .team-name{font-size:15px;font-weight:700;}
+  .team-sub{color:var(--dim);font-size:12px;margin:2px 0 11px;}
+  .lbl{color:var(--dim);font-size:12px;margin-bottom:6px;}
+  .court-big{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;}
+  .court-big div{background:var(--panel-2);border-radius:10px;font-weight:700;line-height:1;
+    font-size:clamp(26px,7vw,44px);display:flex;align-items:center;justify-content:center;padding:15px 0;}
+  .rest-small{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:2px;}
+  .rest-small span{min-width:32px;border:1px solid var(--line);border-radius:6px;color:var(--dim);
+    font-size:14px;font-weight:600;text-align:center;padding:6px;}
+  .rest-small span.next{border-color:#43708f;color:#bcd4e6;}
+
+  .actions{display:flex;gap:9px;margin-top:12px;}
+  .back{width:70px;border:1px solid var(--line);border-radius:12px;color:var(--dim);font-size:13px;}
+  .back:disabled{opacity:.35;}
+  .swap{flex:1;background:var(--amber);color:#20160a;border-radius:12px;
+    font-size:23px;font-weight:700;padding:22px 0;}
+  .swap:disabled{opacity:.4;}
+  .swap.endmode{background:var(--panel-2);color:var(--white);border:1px solid var(--line);}
+
+  .waiting{margin-top:12px;background:var(--wait);border-radius:14px;padding:11px;}
+  .wait-row{display:flex;gap:9px;margin-top:8px;overflow-x:auto;}
+  .wait-card{flex:1 0 46%;border:1px solid #1d3550;border-radius:10px;padding:9px 10px;}
+  .wait-name{color:var(--dim);font-size:13px;font-weight:600;}
+  .wait-next{color:#6b8aa3;font-size:12px;margin-top:5px;line-height:1.5;}
+  .wait-order{color:#4d6a82;font-size:11px;margin-top:5px;}
+
+  .empty{margin-top:40px;text-align:center;color:var(--dim);font-size:15px;line-height:2;}
+
+  /* オーバーレイ */
+  .overlay{position:fixed;inset:0;background:rgba(5,12,20,.72);display:flex;
+    align-items:flex-end;justify-content:center;z-index:20;}
+  .overlay[hidden]{display:none;}
+  .sheet{background:var(--panel);border-radius:18px 18px 0 0;width:100%;max-width:520px;
+    padding:20px 16px calc(16px + env(safe-area-inset-bottom));max-height:92vh;overflow-y:auto;}
+  .sheet h2{font-size:17px;font-weight:700;margin:0 0 15px;}
+  .change{display:flex;flex-direction:column;gap:9px;margin-bottom:16px;}
+  .change-row{display:flex;align-items:center;gap:9px;font-size:15px;}
+  .tagout{border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:12px;padding:4px 9px;}
+  .tagin{background:var(--panel-2);border-radius:7px;font-size:12px;padding:5px 9px;}
+  .small{color:var(--dim);font-size:12px;}
+  .nextline{border-top:1px solid var(--line);padding-top:13px;color:var(--dim);font-size:13px;line-height:1.85;}
+  .nextline b{color:var(--white);font-weight:600;}
+  .sheet-actions{display:flex;gap:9px;margin-top:17px;}
+  .cancel{flex:1;border:1px solid var(--line);border-radius:12px;color:var(--dim);font-size:15px;padding:16px 0;}
+  .go{flex:1.4;background:var(--amber);color:#20160a;border-radius:12px;font-size:17px;font-weight:700;padding:16px 0;}
+  .go.del{background:var(--danger);color:#fdeaea;}
+  .warn{background:#2a1a1a;border-radius:9px;padding:10px 12px;color:#d9a3a3;
+    font-size:12px;line-height:1.7;margin-bottom:14px;}
+  .winpick{display:flex;gap:9px;margin-bottom:6px;}
+  .winpick button{flex:1;border:1px solid var(--line);border-radius:12px;padding:18px 0;
+    font-size:16px;font-weight:700;}
+
+  /* 設定 */
+  .teamtabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+  .tab{border:1px solid var(--line);border-radius:8px;color:var(--dim);font-size:13px;padding:8px 13px;}
+  .tab.on{background:var(--panel-2);color:var(--white);border-color:var(--panel-2);}
+  .addteam{border:1px dashed var(--line);border-radius:8px;color:var(--dim);font-size:13px;padding:8px 13px;}
+  .field{margin-bottom:20px;}
+  .stepper{display:flex;align-items:center;gap:12px;}
+  .step-btn{width:50px;height:50px;border-radius:11px;border:1px solid var(--line);font-size:24px;}
+  .step-btn:disabled{opacity:.3;}
+  .count{font-size:32px;font-weight:700;min-width:96px;text-align:center;}
+  .count small{font-size:14px;font-weight:400;color:var(--dim);margin-left:3px;}
+  .preview{margin-top:11px;background:var(--navy);border-radius:9px;padding:10px 12px;
+    color:var(--dim);font-size:13px;line-height:1.6;}
+  .preview b{color:var(--white);font-size:17px;letter-spacing:.12em;}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;}
+  .chip{width:44px;height:44px;border-radius:9px;border:1px solid var(--line);font-size:17px;}
+  .chip.gone{color:#456277;border-style:dashed;text-decoration:line-through;}
+  .note{color:var(--dim);font-size:12px;line-height:1.7;margin-top:9px;}
+  .danger-zone{margin-top:24px;border-top:1px solid var(--line);padding-top:15px;}
+  .delbtn{border:1px solid #6b3a3a;border-radius:10px;color:#e08b8b;font-size:14px;
+    padding:13px 0;width:100%;}
+  .done{margin-top:14px;background:var(--navy);border-radius:12px;padding:16px 0;
+    font-size:16px;font-weight:600;width:100%;}
+  .resetall{margin-top:10px;color:#6b8aa3;font-size:12px;width:100%;padding:8px 0;}
+  @media (max-width:430px){
+    .match{flex-direction:column;}
+    .court-big{grid-template-columns:repeat(5,1fr);}
+    .court-big div{font-size:30px;padding:12px 0;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="whereami" id="whereami">—</span>
+  <span class="topbtns">
+    <button class="gear" id="btnGear" aria-label="設定">⚙</button>
+  </span>
+</div>
+
+<div id="main"></div>
+
+<div class="actions" id="actions" hidden>
+  <button class="back" id="btnBack">戻す</button>
+  <button class="swap" id="btnSwap">交代</button>
+</div>
+
+<div class="waiting" id="waiting" hidden></div>
+
+<!-- 確認 -->
+<div class="overlay" id="ovConfirm" hidden>
+  <div class="sheet" id="confirmSheet"></div>
+</div>
+
+<!-- 設定 -->
+<div class="overlay" id="ovSettings" hidden>
+  <div class="sheet" id="settingsSheet"></div>
+</div>
+
+<script>
+"use strict";
+
+const KEY = "basket-rotation-v1";
+const COURT = 5;
+
+let S = null;          // state
+let history = [];      // 戻す用
+let settingsTeam = null;
+
+/* ---------- 状態 ---------- */
+
+function newTeam(name, n){
+  const members = [];
+  for(let i=1;i<=n;i++) members.push(i);
+  return { id: "t"+Math.random().toString(36).slice(2,8), name, members, startNum:1, streak:0 };
+}
+
+function initState(){
+  return {
+    teams: [newTeam("Aチーム",5), newTeam("Bチーム",5)],
+    playing: [],
+    waiting: [],
+    gameNo: 1,
+    swaps: 0,
+    firstGameDone: false
+  };
+}
+
+function seatTeams(){
+  const ids = S.teams.map(t=>t.id);
+  S.playing = S.playing.filter(id=>ids.includes(id));
+  S.waiting = S.waiting.filter(id=>ids.includes(id) && !S.playing.includes(id));
+  for(const id of ids){
+    if(!S.playing.includes(id) && !S.waiting.includes(id)){
+      if(S.playing.length<2) S.playing.push(id); else S.waiting.push(id);
+    }
+  }
+  while(S.playing.length<2 && S.waiting.length>0) S.playing.push(S.waiting.shift());
+}
+
+function team(id){ return S.teams.find(t=>t.id===id); }
+
+function courtOf(t){
+  const m=t.members, len=m.length;
+  if(len===0) return [];
+  if(len<=COURT) return m.slice();
+  let i=m.indexOf(t.startNum);
+  if(i<0) i=0;
+  const out=[];
+  for(let j=0;j<COURT;j++) out.push(m[(i+j)%len]);
+  return out;
+}
+function restOf(t){
+  const c=courtOf(t), m=t.members, len=m.length;
+  if(len<=COURT) return [];
+  let i=m.indexOf(t.startNum); if(i<0) i=0;
+  const out=[];
+  for(let j=COURT;j<len;j++){ const n=m[(i+j)%len]; if(!c.includes(n)) out.push(n); }
+  return out;
+}
+function stepOf(t){
+  const extra = t.members.length - COURT;
+  return extra<=0 ? 0 : Math.min(extra, COURT);
+}
+function nextInOf(t){
+  const k=stepOf(t);
+  if(k===0) return [];
+  const m=t.members, len=m.length;
+  let i=m.indexOf(t.startNum); if(i<0) i=0;
+  const nc=[];
+  for(let j=0;j<COURT;j++) nc.push(m[(i+k+j)%len]);
+  const cur=courtOf(t);
+  return nc.filter(n=>!cur.includes(n));
+}
+function advance(t){
+  const k=stepOf(t);
+  if(k===0) return;
+  const m=t.members, len=m.length;
+  let i=m.indexOf(t.startNum); if(i<0) i=0;
+  t.startNum = m[(i+k)%len];
+}
+
+/* ---------- 保存 ---------- */
+
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify({S, history})); }catch(e){}
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return false;
+    const d = JSON.parse(raw);
+    if(!d || !d.S || !Array.isArray(d.S.teams)) return false;
+    S = d.S; history = Array.isArray(d.history) ? d.history : [];
+    return true;
+  }catch(e){ return false; }
+}
+function snapshot(){
+  history.push(JSON.stringify(S));
+  if(history.length>200) history.shift();
+}
+function undo(){
+  if(!history.length) return;
+  S = JSON.parse(history.pop());
+  render(); save();
+}
+
+/* ---------- 操作 ---------- */
+
+function doSwap(){
+  snapshot();
+  S.playing.forEach(id=>advance(team(id)));
+  S.swaps++;
+  render(); save();
+}
+
+function finishGame(loserStaysWinnerId){
+  const [a,b] = S.playing.map(team);
+  let leaving;
+  if(!S.firstGameDone){
+    leaving = loserStaysWinnerId ? team(loserStaysWinnerId) : a;   // 勝ったほうが抜ける
+  }else{
+    leaving = a.streak >= b.streak ? a : b;
+  }
+  const staying = leaving===a ? b : a;
+  const incoming = S.waiting.length ? team(S.waiting[0]) : null;
+
+  snapshot();
+  a.streak++; b.streak++;
+  advance(staying);              // 残るチームは試合終了時にも交代
+  leaving.streak = 0;
+  if(incoming){
+    S.waiting.shift();
+    S.waiting.push(leaving.id);
+    S.playing = [staying.id, incoming.id];
+  }
+  S.gameNo++; S.swaps=0; S.firstGameDone = true;
+  render(); save();
+}
+
+/* ---------- 描画 ---------- */
+
+function render(){
+  seatTeams();
+  const main = document.getElementById("main");
+  const actions = document.getElementById("actions");
+  const waiting = document.getElementById("waiting");
+  const halfLabel = S.swaps===0 ? "前半" : "後半";
+
+  if(S.playing.length<2){
+    document.getElementById("whereami").textContent = "—";
+    main.innerHTML = '<div class="empty">試合には2チーム必要です。<br>右上の歯車からチームを追加してください。</div>';
+    actions.hidden = true; waiting.hidden = true;
+    return;
+  }
+  document.getElementById("whereami").textContent = `第${S.gameNo}試合　${halfLabel}`;
+
+  main.innerHTML = `<div class="match">${S.playing.map(renderTeam).join("")}</div>`;
+
+  actions.hidden = false;
+  document.getElementById("btnBack").disabled = history.length===0;
+  const anyStep = S.playing.some(id=>stepOf(team(id))>0);
+  const swapDone = S.swaps>=1 || !anyStep;
+  const swapBtn = document.getElementById("btnSwap");
+  swapBtn.disabled = false;
+  swapBtn.textContent = swapDone ? "試合終了" : "交代";
+  swapBtn.classList.toggle("endmode", swapDone);
+  swapBtn.onclick = swapDone ? openEnd : doSwap;
+
+  if(S.waiting.length){
+    waiting.hidden = false;
+    waiting.innerHTML = `<div class="lbl">待機中　番号は進みません</div>
+      <div class="wait-row">${S.waiting.map((id,i)=>{
+        const t=team(id), c=courtOf(t);
+        return `<div class="wait-card">
+          <div class="wait-name">${esc(t.name)}${i===0?"　次に出る":""}</div>
+          <div class="wait-next">${t.members.length}人 ・ ${stepOf(t)}人交代<br>次のコート ${c.join(" ")||"—"}</div>
+          <div class="wait-order">待機 ${i+1}番目</div>
+        </div>`;
+      }).join("")}</div>`;
+  }else{
+    waiting.hidden = true;
+  }
+}
+
+function renderTeam(id){
+  const t = team(id);
+  const court = courtOf(t), rest = restOf(t), nx = nextInOf(t);
+  const k = stepOf(t);
+  return `<div class="team">
+    <div class="team-name">${esc(t.name)}</div>
+    <div class="team-sub">${t.members.length}人 ・ ${k?k+"人交代":"交代なし"} ・ 連続${t.streak+1}試合目</div>
+    <div class="lbl">コート</div>
+    <div class="court-big">${court.map(n=>`<div>${n}</div>`).join("")||'<div>—</div>'}</div>
+    <div class="lbl">休み　${rest.length}人</div>
+    <div class="rest-small">${rest.length
+      ? rest.map(n=>`<span class="${nx.includes(n)?"next":""}">${n}</span>`).join("")
+      : '<span style="border:none;">なし</span>'}</div>
+  </div>`;
+}
+
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* ---------- 試合終了の確認 ---------- */
+
+function openEnd(){
+  const [a,b] = S.playing.map(team);
+  const sheet = document.getElementById("confirmSheet");
+
+  if(!S.firstGameDone){
+    sheet.innerHTML = `<h2>第1試合はどちらが勝ちましたか</h2>
+      <p class="small" style="margin:-6px 0 14px;line-height:1.7;">勝ったチームが抜けて、次のチームが入ります。第2試合からは出場数の多いほうが自動で抜けるので、勝敗を聞くのはこれが最後です。</p>
+      <div class="winpick">
+        <button data-win="${a.id}">${esc(a.name)}</button>
+        <button data-win="${b.id}">${esc(b.name)}</button>
+      </div>
+      <div class="sheet-actions"><button class="cancel" data-close>やめる</button></div>`;
+    sheet.querySelectorAll("[data-win]").forEach(btn=>{
+      btn.onclick = ()=>{ closeOverlays(); finishGame(btn.dataset.win); };
+    });
+  }else{
+    const leaving = a.streak >= b.streak ? a : b;
+    const staying = leaving===a ? b : a;
+    const incoming = S.waiting.length ? team(S.waiting[0]) : null;
+    const stayCourt = (()=>{ const c=JSON.parse(JSON.stringify(staying)); advance(c); return courtOf(c); })();
+    sheet.innerHTML = `<h2>この試合を終わりますか</h2>
+      <div class="change">
+        <div class="change-row"><span class="tagout">抜ける</span> ${esc(leaving.name)} <span class="small">連続${leaving.streak+1}試合目</span></div>
+        <div class="change-row"><span class="tagin">入る</span> ${incoming?esc(incoming.name):"—"} <span class="small">${incoming?"待機1番目":"待機チームなし"}</span></div>
+      </div>
+      <div class="nextline">
+        次は <b>第${S.gameNo+1}試合　前半</b><br>
+        <b>${esc(staying.name)}</b> 対 <b>${incoming?esc(incoming.name):"—"}</b><br>
+        ${esc(staying.name)}のコート ${stayCourt.join(" ")}<br>
+        ${incoming?esc(incoming.name)+"のコート "+courtOf(incoming).join(" ")+"<br>":""}
+        ${esc(leaving.name)}は ${courtOf(leaving).join(" ")}番 から再開します
+      </div>
+      <div class="sheet-actions">
+        <button class="cancel" data-close>やめる</button>
+        <button class="go" id="doEnd">終わる</button>
+      </div>`;
+    sheet.querySelector("#doEnd").onclick = ()=>{ closeOverlays(); finishGame(null); };
+  }
+  sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeOverlays);
+  document.getElementById("ovConfirm").hidden = false;
+}
+
+/* ---------- 設定 ---------- */
+
+function openSettings(){
+  if(!settingsTeam || !team(settingsTeam)) settingsTeam = S.teams[0] ? S.teams[0].id : null;
+  renderSettings();
+  document.getElementById("ovSettings").hidden = false;
+}
+
+function renderSettings(){
+  const sheet = document.getElementById("settingsSheet");
+  const t = settingsTeam ? team(settingsTeam) : null;
+
+  const tabs = S.teams.map(x=>`<button class="tab ${x.id===settingsTeam?"on":""}" data-tab="${x.id}">${esc(x.name.replace(/チーム$/,""))}</button>`).join("")
+    + `<button class="addteam" id="addTeam">＋ チーム</button>`;
+
+  let body = "";
+  if(t){
+    const maxNum = t.members.length ? Math.max(...t.members) : 0;
+    const all = []; for(let i=1;i<=maxNum;i++) all.push(i);
+    const court = courtOf(t);
+    body = `
+      <div class="field">
+        <div class="lbl">${esc(t.name)}の人数</div>
+        <div class="stepper">
+          <button class="step-btn" id="mMinus" ${t.members.length<=COURT?"disabled":""}>−</button>
+          <div class="count">${t.members.length}<small>人</small></div>
+          <button class="step-btn" id="mPlus">＋</button>
+        </div>
+        <p class="note">増やすと末尾の番号が1つ増えます。減らすと一番大きい番号が消えます。5人より少なくはできません。</p>
+      </div>
+
+      <div class="field">
+        <div class="lbl">いまコートに出ている先頭の番号</div>
+        <div class="stepper">
+          <button class="step-btn" id="sPrev">−</button>
+          <div class="count">${t.startNum}<small>番から</small></div>
+          <button class="step-btn" id="sNext">＋</button>
+        </div>
+        <div class="preview">この5人になります　<b>${court.join(" ")||"—"}</b></div>
+        <p class="note">普段は触りません。交代を押すたびに自動で進み、ここには現在の状態が出ているだけです。実際とズレたときだけ直してください。</p>
+      </div>
+
+      <div class="field">
+        <div class="lbl">帰った人をタップして外す</div>
+        <div class="chips">${all.map(n=>{
+          const gone = !t.members.includes(n);
+          return `<button class="chip ${gone?"gone":""}" data-num="${n}">${n}</button>`;
+        }).join("")}</div>
+        <p class="note">外した番号は欠番になります。他の番号は振り直しません。順番は保ったまま、いない番号を飛ばします。ベンチが減れば交代人数も自動で変わります。5人を切る外し方はできません。</p>
+      </div>
+
+      <div class="danger-zone">
+        <div class="lbl">${esc(t.name)}をこの日から外す</div>
+        <button class="delbtn" id="delTeam">${esc(t.name)}を削除</button>
+      </div>`;
+  }else{
+    body = `<p class="note">チームがありません。「＋ チーム」から追加してください。</p>`;
+  }
+
+  sheet.innerHTML = `<h2>試合の合間に</h2>
+    <div class="teamtabs">${tabs}</div>
+    ${body}
+    <button class="done" data-close>この画面を閉じる</button>
+    <button class="resetall" id="resetAll">最初からやり直す</button>`;
+
+  sheet.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{ settingsTeam=b.dataset.tab; renderSettings(); });
+  sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeOverlays);
+  sheet.querySelector("#addTeam").onclick = addTeam;
+  sheet.querySelector("#resetAll").onclick = resetAll;
+
+  if(t){
+    sheet.querySelector("#mPlus").onclick = ()=>{
+      snapshot();
+      const maxNum = t.members.length ? Math.max(...t.members) : 0;
+      t.members.push(maxNum+1);
+      afterEdit();
+    };
+    const mMinus = sheet.querySelector("#mMinus");
+    if(!mMinus.disabled) mMinus.onclick = ()=>{
+      if(t.members.length<=COURT) return;
+      snapshot();
+      const maxNum = Math.max(...t.members);
+      t.members = t.members.filter(n=>n!==maxNum);
+      fixStart(t); afterEdit();
+    };
+    sheet.querySelector("#sPrev").onclick = ()=>shiftStart(t,-1);
+    sheet.querySelector("#sNext").onclick = ()=>shiftStart(t,1);
+    sheet.querySelectorAll("[data-num]").forEach(b=>{
+      b.onclick = ()=>{
+        const n = Number(b.dataset.num);
+        snapshot();
+        if(t.members.includes(n)){
+          if(t.members.length<=COURT){ history.pop(); return; }
+          t.members = t.members.filter(x=>x!==n);
+        }else{
+          t.members.push(n); t.members.sort((a,b)=>a-b);
+        }
+        fixStart(t); afterEdit();
+      };
+    });
+    sheet.querySelector("#delTeam").onclick = ()=>confirmDelete(t);
+  }
+}
+
+function fixStart(t){
+  if(!t.members.length) return;
+  if(!t.members.includes(t.startNum)){
+    const bigger = t.members.filter(n=>n>t.startNum);
+    t.startNum = bigger.length ? bigger[0] : t.members[0];
+  }
+}
+function shiftStart(t,dir){
+  if(t.members.length<2) return;
+  snapshot();
+  let i = t.members.indexOf(t.startNum); if(i<0) i=0;
+  i = (i + dir + t.members.length) % t.members.length;
+  t.startNum = t.members[i];
+  afterEdit();
+}
+function afterEdit(){ render(); renderSettings(); save(); }
+
+function addTeam(){
+  snapshot();
+  const used = S.teams.map(t=>t.name);
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let name = "新しいチーム";
+  for(const L of letters){ if(!used.includes(L+"チーム")){ name = L+"チーム"; break; } }
+  const t = newTeam(name, COURT);
+  S.teams.push(t);
+  settingsTeam = t.id;
+  afterEdit();
+}
+
+function confirmDelete(t){
+  const isPlaying = S.playing.includes(t.id);
+  const incoming = S.waiting.length ? team(S.waiting[0]) : null;
+  const other = isPlaying ? team(S.playing.find(id=>id!==t.id)) : null;
+
+  const sheet = document.getElementById("confirmSheet");
+  if(isPlaying && !incoming){
+    sheet.innerHTML = `<h2>いまは削除できません</h2>
+      <div class="warn">${esc(t.name)}は試合に出ていて、代わりに入れる待機チームがありません。先にチームを追加するか、試合を終わらせてから削除してください。</div>
+      <div class="sheet-actions"><button class="cancel" data-close>閉じる</button></div>`;
+  }else{
+    sheet.innerHTML = `<h2>${esc(t.name)}を削除しますか</h2>
+      ${isPlaying ? `<div class="warn">${esc(t.name)}はいま試合に出ています。削除すると、代わりに待機1番目の${esc(incoming.name)}が入ります。</div>` : ""}
+      <div class="nextline" style="border-top:none;padding-top:0;">
+        ${isPlaying ? `第${S.gameNo}試合は <b>${esc(other.name)}</b> 対 <b>${esc(incoming.name)}</b> に変わります<br>${esc(incoming.name)}のコート ${courtOf(incoming).join(" ")}<br>` : ""}
+        ${esc(t.name)}の${t.members.length}人ぶんの順番は消えます
+      </div>
+      <div class="sheet-actions">
+        <button class="cancel" data-close>やめる</button>
+        <button class="go del" id="doDel">削除する</button>
+      </div>`;
+    sheet.querySelector("#doDel").onclick = ()=>{
+      snapshot();
+      S.teams = S.teams.filter(x=>x.id!==t.id);
+      S.playing = S.playing.filter(id=>id!==t.id);
+      S.waiting = S.waiting.filter(id=>id!==t.id);
+      settingsTeam = S.teams[0] ? S.teams[0].id : null;
+      document.getElementById("ovConfirm").hidden = true;
+      render(); renderSettings(); save();
+    };
+  }
+  sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>{ document.getElementById("ovConfirm").hidden = true; });
+  document.getElementById("ovConfirm").hidden = false;
+}
+
+function resetAll(){
+  const sheet = document.getElementById("confirmSheet");
+  sheet.innerHTML = `<h2>最初からやり直しますか</h2>
+    <div class="warn">チーム、人数、進行状況がすべて消えて、5人2チームの状態に戻ります。「戻す」でも元に戻せません。</div>
+    <div class="sheet-actions">
+      <button class="cancel" data-close>やめる</button>
+      <button class="go del" id="doReset">やり直す</button>
+    </div>`;
+  sheet.querySelector("#doReset").onclick = ()=>{
+    S = initState(); history = [];
+    settingsTeam = S.teams[0].id;
+    closeOverlays(); render(); save();
+  };
+  sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>{ document.getElementById("ovConfirm").hidden = true; });
+  document.getElementById("ovConfirm").hidden = false;
+}
+
+function closeOverlays(){
+  document.getElementById("ovConfirm").hidden = true;
+  document.getElementById("ovSettings").hidden = true;
+}
+
+/* ---------- 起動 ---------- */
+
+document.getElementById("btnBack").onclick = undo;
+document.getElementById("btnGear").onclick = openSettings;
+[["ovConfirm"],["ovSettings"]].forEach(([id])=>{
+  document.getElementById(id).addEventListener("click", e=>{
+    if(e.target.id===id) e.currentTarget.hidden = true;
+  });
+});
+
+if(!load()) S = initState();
+settingsTeam = S.teams[0] ? S.teams[0].id : null;
+render();
+</script>
+</body>
+</html>
