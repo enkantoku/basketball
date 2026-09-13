@@ -412,7 +412,8 @@ function finishGame(leavingTeamId){
     const incoming = team(S.waiting[0]);
     a.streak++; b.streak++;
     advance(staying);                 // 残るチームは試合終了時にも交代
-    leaving.streak = 0;               // 抜けるチームは交代せず、抜けた位置から再開
+    advance(leaving);                 // 抜けるチームも交代してから抜ける（休みの人が動く）
+    leaving.streak = 0;               // 次に出るときは、この位置のまま始める
     S.waiting.shift();
     S.waiting.push(leaving.id);
     S.playing = [staying.id, incoming.id];
@@ -558,7 +559,7 @@ function showEndConfirm(leavingTeamId, fromPick){
         <b>${esc(staying.name)}</b> 対 <b>${esc(incoming.name)}</b><br>
         ${esc(staying.name)}のコート ${stayCourt.join(" ")}<br>
         ${esc(incoming.name)}のコート ${courtOf(incoming).join(" ")}<br>
-        ${esc(leaving.name)}は ${courtOf(leaving).join(" ")}番 から再開します
+        ${esc(leaving.name)}は${stepOf(leaving)?"交代して":""} ${previewAdvance(leaving).join(" ")}番 から再開します
       </div>
       <div class="sheet-actions">
         ${backBtn}
