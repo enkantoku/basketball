@@ -21,7 +21,7 @@
   button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer;
     touch-action:manipulation;-webkit-user-select:none;user-select:none;}
   button:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
-  .court-big div,.rest-small span,.chip,.count{-webkit-user-select:none;user-select:none;}
+  .court-big div,.rest-small span,.count{-webkit-user-select:none;user-select:none;}
 
   .topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;}
   .whereami{color:var(--dim);font-size:15px;}
@@ -95,6 +95,9 @@
     font-size:16px;font-weight:700;}
 
   /* 設定 */
+  .alignbtn{width:100%;border:1px solid var(--line);border-radius:10px;color:var(--dim);
+    font-size:13px;padding:11px 8px;margin-top:10px;line-height:1.5;}
+  .alignbtn:disabled{opacity:.35;}
   .undo-in{width:100%;border:1px solid var(--line);border-radius:10px;color:var(--dim);
     font-size:13px;padding:11px 0;margin-bottom:14px;}
   .undo-in:disabled{opacity:.35;}
@@ -114,12 +117,6 @@
   .preview{margin-top:11px;background:var(--navy);border-radius:9px;padding:10px 12px;
     color:var(--dim);font-size:13px;line-height:1.6;}
   .preview b{color:var(--white);font-size:17px;letter-spacing:.12em;}
-  .preview em{color:var(--amber);font-style:normal;font-size:17px;font-weight:700;}
-  .preview .added{color:var(--amber);font-size:12px;display:block;margin-top:5px;}
-  .chips{display:flex;flex-wrap:wrap;gap:7px;}
-  .chip{width:44px;height:44px;border-radius:9px;border:1px solid var(--line);font-size:17px;}
-  .chip.gone{color:#456277;border-style:dashed;text-decoration:line-through;}
-  .chip:disabled{opacity:.4;}
   .note{color:var(--dim);font-size:12px;line-height:1.7;margin-top:9px;}
   .note.caution{color:#e0b878;}
   .danger-zone{margin-top:24px;border-top:1px solid var(--line);padding-top:15px;}
@@ -176,15 +173,13 @@ let S = null;          // state
 let history = [];      // 戻す用
 let settingsTeam = null;
 let storageOK = true;  // この端末に保存できるか
-let chipNote = null;   // チップ操作でコートに入った番号のメモ
 
 /* ---------- 状態 ---------- */
 
 function newTeam(name, n){
-  const members = [];
-  for(let i=1;i<=n;i++) members.push(i);
-  return { id:"t"+Math.random().toString(36).slice(2,8), name, members,
-           nextNum:n, startNum:1, streak:0 };
+  // 番号は必ず 1〜count の連番。欠番は作らない
+  return { id:"t"+Math.random().toString(36).slice(2,8), name,
+           count:n, startIdx:0, streak:0, started:false };
 }
 
 function initState(){
@@ -211,44 +206,34 @@ function seatTeams(){
 
 function team(id){ return S.teams.find(t=>t.id===id); }
 
+function numAt(t, j){ return (t.startIdx + j) % t.count + 1; }
+
 function courtOf(t){
-  const m=t.members, len=m.length;
-  if(len===0) return [];
-  if(len<=COURT) return m.slice();
-  let i=m.indexOf(t.startNum);
-  if(i<0) i=0;
   const out=[];
-  for(let j=0;j<COURT;j++) out.push(m[(i+j)%len]);
+  for(let j=0;j<Math.min(COURT,t.count);j++) out.push(numAt(t,j));
   return out;
 }
 function restOf(t){
-  const c=courtOf(t), m=t.members, len=m.length;
-  if(len<=COURT) return [];
-  let i=m.indexOf(t.startNum); if(i<0) i=0;
   const out=[];
-  for(let j=COURT;j<len;j++){ const n=m[(i+j)%len]; if(!c.includes(n)) out.push(n); }
+  for(let j=COURT;j<t.count;j++) out.push(numAt(t,j));
   return out;
 }
 function stepOf(t){
-  const extra = t.members.length - COURT;
+  const extra = t.count - COURT;
   return extra<=0 ? 0 : Math.min(extra, COURT);
 }
 function nextInOf(t){
   const k=stepOf(t);
   if(k===0) return [];
-  const m=t.members, len=m.length;
-  let i=m.indexOf(t.startNum); if(i<0) i=0;
-  const nc=[];
-  for(let j=0;j<COURT;j++) nc.push(m[(i+k+j)%len]);
-  const cur=courtOf(t);
-  return nc.filter(n=>!cur.includes(n));
+  const out=[];
+  for(let j=COURT;j<COURT+k;j++) out.push(numAt(t,j));
+  return out;
 }
 function advance(t){
+  t.started = true;              // 一度でも交代したら準備中ではない
   const k=stepOf(t);
   if(k===0) return;
-  const m=t.members, len=m.length;
-  let i=m.indexOf(t.startNum); if(i<0) i=0;
-  t.startNum = m[(i+k)%len];
+  t.startIdx = (t.startIdx + k) % t.count;
 }
 function previewAdvance(t){
   const c = JSON.parse(JSON.stringify(t));
@@ -256,14 +241,17 @@ function previewAdvance(t){
   return courtOf(c);
 }
 
-/* 5人以下なら先頭に揃える。それ以外は消えた番号の次へ寄せる */
+/* 準備中（まだ一度も交代していない）の並べ方。
+   休みは前の番号から詰める。6人なら1番、7人なら1と2、8人なら1〜3が休み */
+function layoutForSetup(t){
+  if(t.started || t.count<=COURT) return;
+  t.startIdx = t.count - COURT;
+}
+
+/* 先頭の位置を人数の範囲に収める。5人以下なら1番から */
 function fixStart(t){
-  if(!t.members.length) return;
-  if(t.members.length<=COURT){ t.startNum = t.members[0]; return; }
-  if(!t.members.includes(t.startNum)){
-    const bigger = t.members.filter(n=>n>t.startNum);
-    t.startNum = bigger.length ? bigger[0] : t.members[0];
-  }
+  if(t.count<=COURT){ t.startIdx = 0; return; }
+  t.startIdx = ((t.startIdx % t.count) + t.count) % t.count;
 }
 
 function teamStatus(id){
@@ -308,18 +296,23 @@ function normalizeTeam(x, usedIds){
   usedIds.add(t.id);
   t.name = (typeof x.name==="string" && x.name.trim()) ? x.name : "チーム";
 
-  let m = Array.isArray(x.members) ? x.members.map(Number) : [];
-  m = m.filter(n=>Number.isInteger(n) && n>0);
-  m = Array.from(new Set(m)).sort((a,b)=>a-b);
-  let top = m.length ? m[m.length-1] : 0;
-  while(m.length<COURT){ top++; m.push(top); }   // 5人未満は作れないので埋める
-  t.members = m;
+  // 旧形式（members の配列を持っていたもの）からの読み替え
+  const old = Array.isArray(x.members)
+    ? Array.from(new Set(x.members.map(Number).filter(n=>Number.isInteger(n)&&n>0))).sort((a,b)=>a-b)
+    : null;
 
-  const maxM = m[m.length-1];
-  t.nextNum = (Number.isInteger(x.nextNum) && x.nextNum>=maxM) ? x.nextNum : maxM;
+  let count = Number(x.count);
+  if(!Number.isInteger(count) || count<COURT) count = old ? old.length : COURT;
+  if(count<COURT) count = COURT;
+  t.count = count;
 
-  const sn = Number(x.startNum);
-  t.startNum = m.includes(sn) ? sn : m[0];
+  let idx = Number(x.startIdx);
+  if(!Number.isInteger(idx)){
+    idx = (old && old.indexOf(Number(x.startNum))>=0) ? old.indexOf(Number(x.startNum)) : 0;
+  }
+  t.startIdx = idx;
+
+  t.started = ("started" in x) ? !!x.started : count>COURT;
 
   const sk = Number(x.streak);
   t.streak = (Number.isFinite(sk) && sk>=0) ? Math.floor(sk) : 0;
@@ -381,7 +374,6 @@ function undo(){
     if(st) S = st;
   }catch(e){}
   if(!settingsTeam || !team(settingsTeam)) settingsTeam = S.teams[0] ? S.teams[0].id : null;
-  chipNote = null;
   render();
   if(!document.getElementById("ovSettings").hidden) renderSettings();
   save();
@@ -470,7 +462,7 @@ function render(){
         const t=team(id), c=courtOf(t);
         return `<div class="wait-card">
           <div class="wait-name">${esc(t.name)}${i===0?"　次に出る":""}</div>
-          <div class="wait-next">${t.members.length}人 ・ ${stepOf(t)}人交代<br>次のコート ${c.join(" ")||"—"}</div>
+          <div class="wait-next">${t.count}人 ・ ${stepOf(t)}人交代<br>次のコート ${c.join(" ")||"—"}</div>
           <div class="wait-order">待機 ${i+1}番目</div>
         </div>`;
       }).join("")}</div>`;
@@ -485,7 +477,7 @@ function renderTeam(id){
   const k = stepOf(t);
   return `<div class="team">
     <div class="team-name">${esc(t.name)}</div>
-    <div class="team-sub">${t.members.length}人 ・ ${k?k+"人交代":"交代なし"} ・ 連続${t.streak+1}試合目</div>
+    <div class="team-sub">${t.count}人 ・ ${k?k+"人交代":"交代なし"} ・ 連続${t.streak+1}試合目</div>
     <div class="lbl">コート</div>
     <div class="court-big">${court.map(n=>`<div>${n}</div>`).join("")||'<div>—</div>'}</div>
     <div class="lbl">休み　${rest.length}人</div>
@@ -606,7 +598,6 @@ function openSettings(){
   }else if(!S.playing.includes(settingsTeam) && S.playing.length){
     settingsTeam = S.playing[0];
   }
-  chipNote = null;
   renderSettings();
   document.getElementById("ovSettings").hidden = false;
 }
@@ -626,30 +617,29 @@ function renderSettings(){
   let body = "";
   if(t){
     const isWaiting = !S.playing.includes(t.id);
-    const small = t.members.length<=COURT;
-    const maxM = t.members[t.members.length-1];
-    const canMinus = !small && maxM===t.nextNum;
+    const small = t.count<=COURT;
+    const canMinus = !small;
     const court = courtOf(t);
-    const all = []; for(let i=1;i<=t.nextNum;i++) all.push(i);
-    const added = (chipNote && chipNote.teamId===t.id) ? chipNote.added : [];
+    const rest = restOf(t);
 
     /* 人数 */
-    let minusNote;
-    if(small) minusNote = "5人より少なくはできません。";
-    else if(canMinus) minusNote = `「−」は直前に追加した${maxM}番の取り消しです。`;
-    else minusNote = "「−」は「＋」で追加した番号が残っているときだけ使えます。帰った人は下のチップで外してください。";
+    const countNote = small
+      ? `「＋」を押すと ${t.count+1}番 を追加します。5人より少なくはできません。`
+      : `「＋」を押すと ${t.count+1}番 を追加します。「−」を押すと ${t.count}番 がいなくなります。`
+        + (t.started ? "" : "試合が始まるまでは、番号の小さい人から順に休みに入るよう並べ直します。");
 
-    /* 先頭の番号 */
+    /* 休みの先頭の番号 */
     const startField = small
-      ? `<div class="stepper"><div class="count">${t.startNum}<small>番から</small></div></div>
+      ? `<div class="stepper"><div class="count">—</div></div>
          <div class="preview">5人ぜんいんがコートに出ています　<b>${court.join(" ")||"—"}</b></div>
-         <p class="note">6人以上になると、ここで先頭の番号を調整できるようになります。</p>`
+         <p class="note">6人以上になると、ここで休みの先頭を調整できるようになります。</p>`
       : `<div class="stepper">
            <button class="step-btn" id="sPrev">−</button>
-           <div class="count">${t.startNum}<small>番から</small></div>
+           <div class="count">${rest[0]}<small>番から</small></div>
            <button class="step-btn" id="sNext">＋</button>
          </div>
-         <div class="preview">この5人になります　<b>${court.join(" ")||"—"}</b></div>
+         <div class="preview">休み　<b>${rest.join(" ")||"なし"}</b><br>コート　<b>${court.join(" ")||"—"}</b></div>
+         <button class="alignbtn" id="restOne" ${t.startIdx===t.count-COURT?"disabled":""}>休みを1番からにする　→ ${rest.length} 人（1〜${t.count-COURT}番）が休み</button>
          ${isWaiting?`<p class="note caution">このチームは待機中です。ここを動かすと、次に出るときのコートが変わります。</p>`:""}
          <p class="note">普段は触りません。交代を押すたびに自動で進み、ここには現在の状態が出ているだけです。実際とズレたときだけ直してください。</p>`;
 
@@ -658,30 +648,16 @@ function renderSettings(){
         <div class="lbl">${esc(t.name)}の人数</div>
         <div class="stepper">
           <button class="step-btn" id="mMinus" ${canMinus?"":"disabled"}>−</button>
-          <div class="count">${t.members.length}<small>人</small></div>
+          <div class="count">${t.count}<small>人</small></div>
           <button class="step-btn" id="mPlus">＋</button>
         </div>
-        <p class="note">「＋」を押すと ${t.nextNum+1}番 を追加します。${minusNote}</p>
+        <p class="note">${countNote}</p>
+        <p class="note caution">帰った人がいるときは、その人の番号を いまの${t.count}番の人 に引き継いでから「−」を押してください。</p>
       </div>
 
       <div class="field">
-        <div class="lbl">いまコートに出ている先頭の番号</div>
+        <div class="lbl">いま休んでいる先頭の番号</div>
         ${startField}
-      </div>
-
-      <div class="field">
-        <div class="lbl">帰った人をタップして外す</div>
-        <div class="chips">${all.map(n=>{
-          const gone = !t.members.includes(n);
-          const lock = !gone && small;
-          return `<button class="chip ${gone?"gone":""}" data-num="${n}" ${lock?"disabled":""}>${n}</button>`;
-        }).join("")}</div>
-        <div class="preview">この5人になります　${court.map(n=>
-          added.includes(n) ? `<em>${n}</em>` : `<b>${n}</b>`).join(" ")||"—"}
-          ${added.length?`<span class="added">${added.join("・")}番が新しくコートに入りました</span>`:""}</div>
-        <p class="note">${small
-          ? "5人より少なくはできません。先に人数を増やすか、チーム自体を削除してください。"
-          : "外した番号は欠番になります。他の番号は振り直しません。順番は保ったまま、いない番号を飛ばします。もう一度押すと元の順番の位置に戻ります。"}</p>
       </div>
 
       <div class="danger-zone">
@@ -700,7 +676,7 @@ function renderSettings(){
     <button class="resetall" id="resetAll">全チームを消して最初からやり直す</button>`;
 
   sheet.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{
-    settingsTeam=b.dataset.tab; chipNote=null; renderSettings();
+    settingsTeam=b.dataset.tab; renderSettings();
   });
   sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeOverlays);
   sheet.querySelector("#addTeam").onclick = addTeam;
@@ -710,54 +686,40 @@ function renderSettings(){
 
   if(t){
     sheet.querySelector("#mPlus").onclick = ()=>{
-      snapshot(`${t.nextNum+1}番を追加`);
-      t.nextNum++;
-      t.members.push(t.nextNum);
-      fixStart(t); chipNote=null; afterEdit();
+      snapshot(`${t.count+1}番を追加`);
+      t.count++;
+      layoutForSetup(t);
+      fixStart(t); afterEdit();
     };
     const mMinus = sheet.querySelector("#mMinus");
     if(mMinus && !mMinus.disabled) mMinus.onclick = ()=>{
-      const n = t.nextNum;
-      snapshot(`${n}番を取り消し`);
-      t.members = t.members.filter(x=>x!==n);
-      t.nextNum--;
-      fixStart(t); chipNote=null; afterEdit();
+      if(t.count<=COURT) return;
+      snapshot(`${t.count}番を減らした`);
+      t.count--;
+      layoutForSetup(t);
+      fixStart(t); afterEdit();
+    };
+    const restOne = sheet.querySelector("#restOne");
+    if(restOne && !restOne.disabled) restOne.onclick = ()=>{
+      snapshot("休みを1番からに");
+      t.started = true;
+      t.startIdx = t.count - COURT;
+      afterEdit();
     };
     const sPrev = sheet.querySelector("#sPrev");
     const sNext = sheet.querySelector("#sNext");
     if(sPrev) sPrev.onclick = ()=>shiftStart(t,-1);
     if(sNext) sNext.onclick = ()=>shiftStart(t,1);
 
-    sheet.querySelectorAll("[data-num]").forEach(b=>{
-      if(b.disabled) return;
-      b.onclick = ()=>{
-        const n = Number(b.dataset.num);
-        const before = courtOf(t);
-        if(t.members.includes(n)){
-          snapshot(`${n}番を外した`);
-          t.members = t.members.filter(x=>x!==n);
-        }else{
-          snapshot(`${n}番を戻した`);
-          t.members.push(n); t.members.sort((a,b)=>a-b);
-        }
-        fixStart(t);
-        const after = courtOf(t);
-        const added = after.filter(x=>!before.includes(x));
-        chipNote = added.length ? {teamId:t.id, added} : null;
-        afterEdit();
-      };
-    });
     sheet.querySelector("#delTeam").onclick = ()=>confirmDelete(t);
   }
 }
 
 function shiftStart(t,dir){
-  if(t.members.length<=COURT) return;
-  snapshot("先頭の番号を変更");
-  let i = t.members.indexOf(t.startNum); if(i<0) i=0;
-  i = (i + dir + t.members.length) % t.members.length;
-  t.startNum = t.members[i];
-  chipNote = null;
+  if(t.count<=COURT) return;
+  snapshot("休みの先頭を変更");
+  t.started = true;
+  t.startIdx = (t.startIdx + dir + t.count) % t.count;
   afterEdit();
 }
 function afterEdit(){ render(); renderSettings(); save(); }
@@ -770,7 +732,6 @@ function addTeam(){
   const t = newTeam("チーム"+n, COURT);
   S.teams.push(t);
   settingsTeam = t.id;
-  chipNote = null;
   afterEdit();
 }
 
@@ -796,7 +757,7 @@ function confirmDelete(t){
       ${isPlaying ? `<div class="warn">${esc(t.name)}はいま試合に出ています。削除すると、代わりに待機1番目の${esc(incoming.name)}が入ります。</div>` : ""}
       <div class="nextline" style="border-top:none;padding-top:0;">
         ${isPlaying ? `第${S.gameNo}試合は <b>${esc(other.name)}</b> 対 <b>${esc(incoming.name)}</b> に変わります<br>${esc(incoming.name)}のコート ${courtOf(incoming).join(" ")}<br>` : ""}
-        ${esc(t.name)}の${t.members.length}人ぶんの順番は消えます
+        ${esc(t.name)}の${t.count}人ぶんの順番は消えます
       </div>
       <div class="sheet-actions">
         <button class="cancel" data-close>やめる</button>
@@ -808,8 +769,7 @@ function confirmDelete(t){
       S.playing = S.playing.filter(id=>id!==t.id);
       S.waiting = S.waiting.filter(id=>id!==t.id);
       settingsTeam = null;
-      chipNote = null;
-      document.getElementById("ovConfirm").hidden = true;
+          document.getElementById("ovConfirm").hidden = true;
       render();
       if(!settingsTeam || !team(settingsTeam)){
         settingsTeam = S.playing[0] || (S.teams[0] ? S.teams[0].id : null);
@@ -830,7 +790,7 @@ function resetAll(){
       <button class="go del" id="doReset">やり直す</button>
     </div>`;
   sheet.querySelector("#doReset").onclick = ()=>{
-    S = initState(); history = []; chipNote = null;
+    S = initState(); history = [];
     settingsTeam = S.teams[0].id;
     closeOverlays(); render(); save();
   };
