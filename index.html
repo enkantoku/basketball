@@ -164,8 +164,8 @@
 <script>
 "use strict";
 
-const KEY = "basket-rotation-v1";
-const BROKEN_KEY = "basket-rotation-broken";
+const KEY = "basket-rotation-v2";
+const BROKEN_KEY = "basket-rotation-v2-broken";
 const COURT = 5;
 const HIST_MAX = 50;
 
@@ -296,20 +296,12 @@ function normalizeTeam(x, usedIds){
   usedIds.add(t.id);
   t.name = (typeof x.name==="string" && x.name.trim()) ? x.name : "チーム";
 
-  // 旧形式（members の配列を持っていたもの）からの読み替え
-  const old = Array.isArray(x.members)
-    ? Array.from(new Set(x.members.map(Number).filter(n=>Number.isInteger(n)&&n>0))).sort((a,b)=>a-b)
-    : null;
-
   let count = Number(x.count);
-  if(!Number.isInteger(count) || count<COURT) count = old ? old.length : COURT;
-  if(count<COURT) count = COURT;
+  if(!Number.isInteger(count) || count<COURT) count = COURT;
   t.count = count;
 
   let idx = Number(x.startIdx);
-  if(!Number.isInteger(idx)){
-    idx = (old && old.indexOf(Number(x.startNum))>=0) ? old.indexOf(Number(x.startNum)) : 0;
-  }
+  if(!Number.isInteger(idx)) idx = 0;
   t.startIdx = idx;
 
   t.started = ("started" in x) ? !!x.started : count>COURT;
@@ -784,7 +776,7 @@ function confirmDelete(t){
 function resetAll(){
   const sheet = document.getElementById("confirmSheet");
   sheet.innerHTML = `<h2>全チームを消して最初からやり直しますか</h2>
-    <div class="warn">開いているチームだけではありません。すべてのチーム、人数、欠番、進行状況が消えて、チーム1とチーム2の5人ずつに戻ります。「戻す」でも元に戻せません。</div>
+    <div class="warn">開いているチームだけではありません。すべてのチーム、人数、進行状況が消えて、チーム1とチーム2の5人ずつに戻ります。「戻す」でも元に戻せません。</div>
     <div class="sheet-actions">
       <button class="cancel" data-close>やめる</button>
       <button class="go del" id="doReset">やり直す</button>
