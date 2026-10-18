@@ -28,6 +28,8 @@
   .topbtns{display:flex;gap:8px;align-items:center;}
   .gear{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);
     display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:16px;}
+  .helptop{border:1px solid var(--line);border-radius:999px;color:var(--dim);
+    font-size:13px;padding:8px 13px;text-decoration:none;line-height:1;white-space:nowrap;}
   .warnbadge{border:1px solid #6b3a3a;background:#2a1a1a;color:#e2a5a5;
     border-radius:8px;font-size:12px;padding:7px 10px;line-height:1;}
   .warnbadge[hidden]{display:none;}
@@ -122,7 +124,11 @@
   .danger-zone{margin-top:24px;border-top:1px solid var(--line);padding-top:15px;}
   .delbtn{border:1px solid #6b3a3a;border-radius:10px;color:#e08b8b;font-size:14px;
     padding:13px 0;width:100%;}
-  .done{margin-top:14px;background:var(--navy);border-radius:12px;padding:16px 0;
+  .helplink{display:block;width:100%;text-align:center;border:1px solid var(--line);
+    border-radius:10px;color:var(--dim);font-size:14px;padding:13px 0;margin-top:18px;
+    text-decoration:none;}
+  .helplink.on-main{margin-top:12px;font-size:15px;padding:15px 0;}
+  .done{margin-top:10px;background:var(--navy);border-radius:12px;padding:16px 0;
     font-size:16px;font-weight:600;width:100%;}
   .resetall{margin-top:10px;color:#6b8aa3;font-size:12px;width:100%;padding:8px 0;}
   @media (max-width:430px){
@@ -138,6 +144,7 @@
   <span class="whereami" id="whereami">—</span>
   <span class="topbtns">
     <button class="warnbadge" id="btnStore" hidden>⚠ 保存できません</button>
+    <a class="helptop" id="btnHelpTop" href="https://enkantoku.github.io/basketball/manual.html" target="_blank" rel="noopener">使い方</a>
     <button class="gear" id="btnGear" aria-label="設定">⚙</button>
   </span>
 </div>
@@ -168,6 +175,7 @@ const KEY = "basket-rotation-v2";
 const BROKEN_KEY = "basket-rotation-v2-broken";
 const COURT = 5;
 const HIST_MAX = 50;
+const HELP_HTML = '<a class="helplink on-main" href="https://enkantoku.github.io/basketball/manual.html" target="_blank" rel="noopener">使い方を見る</a>';
 
 let S = null;          // state
 let history = [];      // 戻す用
@@ -428,7 +436,7 @@ function render(){
 
   if(S.playing.length<2){
     document.getElementById("whereami").textContent = "—";
-    main.innerHTML = '<div class="empty">試合には2チーム必要です。<br>右上の歯車からチームを追加してください。</div>';
+    main.innerHTML = '<div class="empty">試合には2チーム必要です。<br>右上の歯車からチームを追加してください。</div>' + HELP_HTML;
     actions.hidden = true; waiting.hidden = true;
     return;
   }
@@ -437,7 +445,7 @@ function render(){
   const phase = !anyStep ? "交代なし" : (S.swaps===0 ? "前半" : "後半");
   document.getElementById("whereami").textContent = `第${S.gameNo}試合　${phase}`;
 
-  main.innerHTML = `<div class="match">${S.playing.map(renderTeam).join("")}</div>`;
+  main.innerHTML = `<div class="match">${S.playing.map(renderTeam).join("")}</div>` + HELP_HTML;
 
   actions.hidden = false;
   syncActions();
@@ -664,6 +672,7 @@ function renderSettings(){
     ${undoBar}
     <div class="teamtabs">${tabs}</div>
     ${body}
+    <a class="helplink" href="https://enkantoku.github.io/basketball/manual.html" target="_blank" rel="noopener">使い方を見る</a>
     <button class="done" data-close>この画面を閉じる</button>
     <button class="resetall" id="resetAll">全チームを消して最初からやり直す</button>`;
 
